@@ -4,3 +4,5 @@ This repository implements the analyses for the Princeton undergraduate thesis o
 Single-trait exome-wide association analyses are implemented in the REGENIE folder.
 
 Helper scripts, such as scripts to construct the data files and to perform mash multi-trait testing, are contained within the R folder.
+
+Analysis of publically-available gene expression data is available in Thesis_GTEX_OT.ipynb.
