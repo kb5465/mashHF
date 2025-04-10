@@ -7,7 +7,14 @@ library(dplyr)
 # Read in bulk data file
 ukbb <- fread("/mnt/project/sjj/short_projects/DCM_mono_poly/data/UKBB_DCM_mutations_and_score_v3.tsv")
 ukbb <- as.data.frame(ukbb)[,c("IID", "DCM", "Heart_Failure", "Hypertrophic_cardiomyopathy", "age", "sex",
-                               "exclude_sampleQC", "exclude_related_2nd_deg")]
+                               "exclude_sampleQC", "exclude_related_2nd_deg", "in_white_British_ancestry_subset",
+                               "f.21001.0.0", "f.20116.0.0",                                
+                               "LDL_direct",
+                               "f.21001.0.0", # BMI
+                               "f.4080.0.0", "f.4079.0.0", # Blood pressure
+                               "Coronary_Artery_Disease_INTERMEDIATE", "Diabetes_Type_2", 
+                               "Atrial_fibrillation_or_flutter", "Chronic_kidney_disease",
+                               "Ischemic_stroke")]
 
 # Load linker file
 linker <- fread('/mnt/project/sjj/short_projects/DCM_mono_poly/data/ukb_app17488_app7089_link.csv')
@@ -47,6 +54,10 @@ ukbb <- merge(ukbb, as.data.frame(cMRI)[,c("app17488", "LVESV", "LVEDV", "LVEF",
 ukbb <- merge(ukbb, as.data.frame(lvm)[,c("sample_id", "lvm_seg_adjusted", "lvmi_seg_adjusted")], by.x = "IID", by.y = "sample_id", all.x=T)
 ukbb <- merge(ukbb, bsa, by.x = "IID", by.y = "f.eid", all.x=T)
 
+# Merge race variable
+race <- as.data.frame(fread("/mnt/project/kbiddinger/data/UKBBRace.txt"))
+ukbb <- merge(ukbb,race[,c("eid",setdiff(colnames(race),colnames(ukbb)))], by.x = 'IID', by.y = 'eid', all.x = TRUE)
+
 # Define LV concentricity
 ukbb$LVConc <- ukbb$LVEDV / ukbb$lvm_seg_adjusted
 
@@ -84,7 +95,7 @@ ukbb[PCs] <- scale(ukbb[PCs])
 ukbb$age_squared <- ukbb$age ^ 2
 
 # Define outcomes of interest
-qt <- c("LVMi", "LVESVi", "LVEDVi", "LVEF", "LVConc",
+qt <- c("LVMi", "LVESVi", "LVEDVi", "LVEF",
              "meanWT", "strain_rad", "strain_long", "strain_circ", "Troponin", "NTproBNP")
 bt <- c("HF", "DCM", "HCM")
 
@@ -106,7 +117,28 @@ for (t in qt) {
 
 # Inspect data distributions
 for (t in qt) {
-  hist(ukbb[[t]], main = t)
+  output_name <- paste0(t, ".png")
+  
+  # Save the plot as a PNG
+  png(output_name)
+  
+  # Customize the plot
+  hist(
+    ukbb[[t]],
+    main = "",
+    xlab = "",
+    cex.lab = 1.5,
+    cex.main = 1.8,
+    cex.axis = 1.6
+  )
+  
+  # Make axis titles bold
+  title(xlab = t, font.lab = 2, cex.lab = 2)  # Bold x-axis label
+  
+  dev.off()
+  
+  system(paste0("dx rm exome-seq:/kbiddinger/projects/mashHF/data/pheno/", output_name))
+  system(paste0("dx upload ", output_name, " --destination exome-seq:kbiddinger/projects/mashHF/data/pheno/"))
 }
 
 # Write the final curated data to a tab-separated file
@@ -118,3 +150,60 @@ write.table(ukbb[, c("FID", "IID", qt, bt,
 # Upload the curated data file to a destination
 system(paste0("dx rm exome-seq:/kbiddinger/projects/mashHF/data/pheno/", file_name))
 system(paste0("dx upload ", file_name, " --destination exome-seq:kbiddinger/projects/mashHF/data/pheno/"))
+
+
+
+
+library(ggplot2)
+library(ggpubr)
+
+# Store plots
+plot_list <- list()
+
+# Generate density plots
+for (t in qt) {
+  vec <- ukbb[[t]]
+  vec <- vec[!is.na(vec)]
+  
+  if (length(vec) < 10) {
+    plot_list[[t]] <- NULL
+    next
+  }
+  
+  p <- ggplot(data.frame(val = vec), aes(x = val)) +
+    geom_density(fill = "steelblue", alpha = 0.3, color = "black") +
+    labs(
+      title = t,
+      x = t,
+      y = "Density"
+    ) +
+    theme_minimal(base_size = 16) +
+    theme(
+      plot.title = element_text(face = "bold", hjust = 0.5),
+      plot.margin = margin(10, 10, 10, 10)
+    )
+  
+  plot_list[[t]] <- p
+}
+
+# Filter valid plots
+plots <- plot_list[qt]
+plots <- plots[!sapply(plots, is.null)]
+
+# Top 3x3 grid
+top_grid <- ggarrange(plotlist = plots[1:9], ncol = 3, nrow = 3)
+
+# Bottom row with only the middle plot
+empty_plot <- ggplot() + theme_void()
+bottom_row <- ggarrange(empty_plot, plots[[10]], empty_plot, ncol = 3, widths = c(1, 1, 1))
+
+# Combine both
+final_plot <- ggarrange(top_grid, bottom_row, nrow = 2, heights = c(3, 1))
+
+# Save the figure
+ggsave("combined_density_plots.png", final_plot, width = 15, height = 18, dpi = 300)
+
+# Upload the figure
+system("dx rm exome-seq:/kbiddinger/projects/mashHF/data/pheno/combined_density_plots.png")
+system("dx upload combined_density_plots.png --destination exome-seq:kbiddinger/projects/mashHF/data/pheno/")
+
