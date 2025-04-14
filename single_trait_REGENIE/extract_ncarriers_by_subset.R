@@ -1,43 +1,49 @@
-# ---- Load Libraries ----
+#!/usr/bin/env Rscript
+
+###############################################################
+# mashHF: Extract N_CARRIERS by Subset for Canonical LOF Genes
+# Author: Kiran Biddinger
+# Description:
+# - Reads canonical LOF result files for multiple phenotypes
+# - Extracts N_CARRIERS per gene per subset
+# - Annotates genes with HGNC names
+# - Filters to a predefined gene set of interest
+###############################################################
+
+# ----------------------------
+# 1. Load Required Libraries
+# ----------------------------
 library(tidyverse)
 library(data.table)
 library(biomaRt)
 
-# ---- File Settings ----
-# Path to directory with TSVs
+# ----------------------------
+# 2. Define Input Paths and File List
+# ----------------------------
 data_dir <- "/Users/kbidding/Documents/mashHF/data/st"
-
-# Get list of all canonical_LOF result files
 files <- list.files(data_dir, pattern = "_canonical_LOF_0.01_merged.tsv$", full.names = TRUE)
 
-# Extract phenotype names (PHENO)
+# Extract phenotype names (e.g., "HF", "LVEF", "NTproBNP")
 phenos <- gsub("_canonical_LOF_0.01_merged.tsv", "", basename(files))
 names(files) <- phenos
 
-# ---- Load All Files and Compute N_carriers ----
-# Function to read file and compute z-scores
+# ----------------------------
+# 3. Load Files and Extract N_CARRIERS
+# ----------------------------
 read_and_compute_ncarriers <- function(file, pheno) {
   df <- as.data.frame(fread(file))
-  
-  # Compute Z-scores as beta / se
-  df[[pheno]] <- df$N_CARRIERS
-  
-  # Keep only gene ID and Z-score
+  df[[pheno]] <- df$N_CARRIERS  # Assign to new column with phenotype name
   df_subset <- df[, c("ID", pheno)]
   return(df_subset)
 }
 
-# Apply the function to all files
 ncar_list <- map2(files, phenos, read_and_compute_ncarriers)
+ncar_data <- reduce(ncar_list, full_join, by = "ID")  # Merge on gene ID
 
-# Merge all data frames by gene ID
-ncar_data <- reduce(ncar_list, full_join, by = "ID")
-
-# ---- Annotate Genes with Gene Names ----
-# Connect to Ensembl
+# ----------------------------
+# 4. Annotate Ensembl Gene IDs with HGNC Symbols
+# ----------------------------
 ensembl <- useMart("ensembl", dataset = "hsapiens_gene_ensembl")
-
-# Fetch gene annotations
 gene_annotations <- getBM(
   attributes = c("ensembl_gene_id", "external_gene_name"),
   filters = "ensembl_gene_id",
@@ -45,14 +51,12 @@ gene_annotations <- getBM(
   mart = ensembl
 )
 
-# Rename for merging
 colnames(gene_annotations) <- c("ID", "Gene_Name")
-
-# Merge to get gene names
 ncar_data <- left_join(ncar_data, gene_annotations, by = "ID")
 
-
-# Define relevant genes
+# ----------------------------
+# 5. Filter to Genes of Interest
+# ----------------------------
 genes <- c(
   "TTN", "MYBPC3", "SCIN", "CEACAM7", "MYO16", "CNTLN", "PREX2", "HDAC9",
   "STON1-GTF2A1L", "NUP133", "ALDH3A2", "DDX43", "NUFIP1", "HBQ1", "SIGLEC1", "TRMT2A",
@@ -69,18 +73,22 @@ genes <- c(
   "BBOX1", "GAB4", "P2RX6"
 )
 
-# Select relevant genes
-ncar_data <- subset(ncar_data, Gene_Name %in% genes)
+ncar_data <- filter(ncar_data, Gene_Name %in% genes)
 
-# Trim to unique population-specific values
-ncar_final <- data.frame(Gene = ncar_data$Gene_Name,
-                         All = round(ncar_data$HF),
-                         LV_Subset = round(ncar_data$LVEF),
-                         LV_ML_Subset = round(ncar_data$LVMi),
-                         Proteomics_Subset = round(ncar_data$NTproBNP))
+# ----------------------------
+# 6. Format Final Table
+# ----------------------------
+# Rename columns for clarity
+ncar_final <- data.frame(
+  Gene = ncar_data$Gene_Name,
+  All = round(ncar_data$HF),
+  LV_Subset = round(ncar_data$LVEF),
+  LV_ML_Subset = round(ncar_data$LVMi),
+  Proteomics_Subset = round(ncar_data$NTproBNP)
+)
 
+# Optional: write to file
+# write.csv(ncar_final, "N_carriers_by_subset.csv", row.names = FALSE)
 
-
-
-
-
+# View output
+print(head(ncar_final))
