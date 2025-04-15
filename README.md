@@ -55,9 +55,9 @@ Location: `multi_trait_mash/`
 ### 4. Simulation Experiments for mash Validation
 Location: `simulations/`
 
-- `mashHF_simulations_final.R`  
+- `simulate_mashHF_main_pipeline.R`  
   Main simulation used in the thesis to benchmark mash.
-- `mashHF_simulations_noise.R`, `mashHF_simulations_bias.R`, `mashHF_simulations_domeffects.R`  
+- `simulate_mashHF_vary_noise_level.R`, `simulate_mashHF_biased_noise_effects.R`, `simulate_mashHF_dominant_effect_patterns.R`  
   Additional scenarios varying effect types and error structure.
 
 ---
