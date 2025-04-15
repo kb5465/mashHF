@@ -73,13 +73,13 @@ Location: `expression_GTEX/`
 ### 6. eQTL Integration and Cauchy-Based Gene-Trait Aggregation
 Location: `eQTL_integration/`
 
-- `intersect_rsids_across_gwas.R`  
+- `01_intersect_rsids_across_gwas.R`  
   Identifies shared variants across summary datasets.
-- `extract_eqtls_for_mashHF_genes.R`  
+- `02_extract_eqtls_for_mashHF_genes.R`  
   Extracts GTEx-based eQTLs for nominated genes.
-- `subset_gwas_for_mashHF_eqtls.R`  
+- `03_subset_gwas_for_mashHF_eqtls.R`  
   Matches eQTLs to GWAS results.
-- `eqtl_gwas_cauchy_heatmap.R`  
+- `04_eqtl_gwas_cauchy_heatmap.R`  
   Aggregates p-values and visualizes tissue-specific signal.
 
 ---
