@@ -30,10 +30,10 @@ Location: `single_trait_REGENIE/`
   Run REGENIE steps 1 and 2 for continuous traits.  
 - `run_regenie_step1_BT.sh`, `run_regenie_step2_BT_chunked.sh`  
   Run REGENIE steps for binary traits (HF, DCM, HCM).  
-- `filter_setinclusion_file_by_gene_and_tissue.R`  
-  Filters REGENIE set files for selected tissues and genes.  
 - `merge_canonical_LOF_results.R`, `extract_ncarriers_by_subset.R`  
   Post-process and summarize burden test results.
+- `filter_setinclusion_file_by_gene_and_tissue.R`  
+  Helper script to filter REGENIE set files for selected tissues and genes. 
 
 ---
 
@@ -73,26 +73,26 @@ Location: `expression_GTEX/`
 ### 6. eQTL Integration and Cauchy-Based Gene-Trait Aggregation
 Location: `eQTL_integration/`
 
+- `intersect_rsids_across_gwas.R`  
+  Identifies shared variants across summary datasets.
 - `extract_eqtls_for_mashHF_genes.R`  
   Extracts GTEx-based eQTLs for nominated genes.
 - `subset_gwas_for_mashHF_eqtls.R`  
   Matches eQTLs to GWAS results.
 - `eqtl_gwas_cauchy_heatmap.R`  
   Aggregates p-values and visualizes tissue-specific signal.
-- `intersect_rsids_across_gwas.R`  
-  Identifies shared variants across summary datasets.
 
 ---
 
 ### 7. PheWAS Scan of Nominated Genes
 Location: `pheWAS_scan/`
 
+- `extract_phewas_summary_stats.sh`  
+  Extracts relevant REGENIE results by gene.
 - `merge_singletrait_results_phewas.R`  
   Combines PheWAS output across traits.
 - `canonical_LOF_gene_trait_heatmap_phewas.R`  
   Plots gene-phenotype association heatmap.
-- `extract_phewas_summary_stats.sh`  
-  Extracts relevant REGENIE results by gene.
 
 ---
 
