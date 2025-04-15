@@ -5,7 +5,7 @@ This repository contains code for the thesis:
 **Population Genetics for Heart Failure: A Multi-Trait Analysis of Rare, Protein-Coding Variants**  
 Kiran J. Biddinger | Princeton University, 2025
 
-The project uses exome-sequencing data from the UK Biobank to identify loss-of-function (LoF) variants associated with heart failure (HF), leveraging both single-trait burden tests and a novel multi-trait implementation of the mash framework.
+The project uses exome-sequencing data from the UK Biobank to identify loss-of-function (LoF) variants associated with heart failure (HF), leveraging both single-trait burden tests and a multi-trait implementation of the mash framework.
 
 ---
 
@@ -57,7 +57,7 @@ Location: `simulations/`
 
 - `mashHF_simulations_final.R`  
   Main simulation used in the thesis to benchmark mash.
-- `mashHF_simulations_noise.R`, `bias.R`, `domeffects.R`  
+- `mashHF_simulations_noise.R`, `mashHF_simulations_bias.R`, `mashHF_simulations_domeffects.R`  
   Additional scenarios varying effect types and error structure.
 
 ---
